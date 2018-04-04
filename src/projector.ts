@@ -9,7 +9,7 @@ export class Projector {
   public endIndex = 0
   public anchorItem = { index: 0, offset: 0 }
 
-  private callback: Callback
+  private callback!: Callback
   private guesstimatedItemCountPerPage: number
   private displayCount: number
   private scrollerDom: HTMLDivElement
@@ -83,7 +83,7 @@ export class Projector {
     const scrollTop = this.scrollerDom.scrollTop
     if (scrollTop < this.anchorItem.offset) {
       const startItem = this.cachedItemRect[this.startIndex]
-      const nextAnchorItem = this.cachedItemRect.find(item => item ? item.bottom >= scrollTop : false)
+      const nextAnchorItem = this.cachedItemRect.find(item => item ? item.bottom >= scrollTop : false)!
       const nextStartIndex = nextAnchorItem.index - 3
       if (this.cachedItemRect[nextStartIndex > 0 ? nextStartIndex : 0]) {
         this.startIndex = nextAnchorItem.index > 2 ? nextAnchorItem.index - 3 : 0
@@ -99,6 +99,12 @@ export class Projector {
       }
       this.next()
     }
+  }
+
+  public setAnchorFromCaches(scrollTop: number) {
+    const anchor = this.cachedItemRect.find(item => item ? item.bottom > scrollTop : false)!
+    this.anchorItem.index = anchor.index
+    this.anchorItem.offset = anchor.top
   }
 
   public subscribe(callback: Callback) {

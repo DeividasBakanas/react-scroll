@@ -33,16 +33,27 @@ export class InfiniteScroller extends React.Component<Props, State> {
     onEnd: () => { }
   }
   public state: State = { projectedItems: [], underPlaceholderHeight: 0, upperPlaceholderHeight: 0 }
-  public divDom: HTMLDivElement
-  public upperContentDom: HTMLDivElement
+  public divDom!: HTMLDivElement
+  public upperContentDom!: HTMLDivElement
   public needAdjustment = false
   public isAdjusting = false
 
   private hasBottomTouched = true
   private scrollTop = 0
-  private projector: Projector
-  private width: number
+  private projector!: Projector
+  private width = 0
   private isMeasuring = false
+
+  private resizeHandler = () => {
+    if (this.divDom.clientWidth !== this.width) {
+      this.width = this.divDom.clientWidth
+      this.projector.cachedItemRect.length = 0
+      this.isMeasuring = true
+      this.needAdjustment = true
+      this.isAdjusting = false
+      this.setState({})
+    }
+  }
 
   /**
    * tell projector to project while got asynchronous data
@@ -90,12 +101,11 @@ export class InfiniteScroller extends React.Component<Props, State> {
       this.projector.next()
     }
 
-    window.addEventListener("resize", () => {
-      if (this.divDom.clientWidth !== this.width) {
-        this.width = this.divDom.clientWidth
-        this.measure()
-      }
-    })
+    window.addEventListener("resize", this.resizeHandler)
+  }
+
+  public componentWillUnmount() {
+    window.removeEventListener("resize", this.resizeHandler)
   }
 
   public render() {
@@ -113,7 +123,6 @@ export class InfiniteScroller extends React.Component<Props, State> {
             key={this.props.itemKey ? item[this.props.itemKey] : index}
             projector={this.projector}
             item={item}
-            measure={this.measure}
             needAdjustment={this.needAdjustment}
             itemIndex={this.projector.startIndex + index}
             upperPlaceholderHeight={this.state.upperPlaceholderHeight}
@@ -123,14 +132,6 @@ export class InfiniteScroller extends React.Component<Props, State> {
         <div style={{ height: this.state.underPlaceholderHeight }}></div>
       </div>
     )
-  }
-
-  public measure = () => {
-    this.projector.cachedItemRect.length = 0
-    this.isMeasuring = true
-    this.needAdjustment = true
-    this.isAdjusting = false
-    this.setState({})
   }
 
   /**
@@ -191,7 +192,11 @@ export class InfiniteScroller extends React.Component<Props, State> {
         this.compatibleScrollTo(scrollTop - finalHeight)
       }
 
-      this.projector.anchorItem = { index: startIndex + 3, offset: cachedItemRect[startIndex + 3].top }
+      if (cachedItemRect[startIndex + 3]) {
+        this.projector.anchorItem = { index: startIndex + 3, offset: cachedItemRect[startIndex + 3].top }
+      } else {
+        this.projector.setAnchorFromCaches(this.divDom.scrollTop)
+      }
     })
   }
 
