@@ -20,7 +20,7 @@ export class Item extends React.Component<Props> {
   }
 
   public shouldComponentUpdate(nextProps: Props) {
-    return this.props.itemIndex !== nextProps.itemIndex ? true : false
+    return this.props.itemIndex !== nextProps.itemIndex || this.props.item !== nextProps.item
   }
 
   public componentDidMount() {
